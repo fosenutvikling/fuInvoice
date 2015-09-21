@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS Invoice_line
 (
   line_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   invoice_id INT UNSIGNED NOT NULL,/*fk invoice */
-  app_product_id INT UNSIGNED NOT NULL DEFAULT 0, /* fk application*/
+  app_product_id VARCHAR(25) NOT NULL DEFAULT '', /* product id which the order line referes to*/
 
   description TEXT NOT NULL DEFAULT '',
   quantity FLOAT UNSIGNED NOT NULL DEFAULT 0,
@@ -84,9 +84,6 @@ CREATE TABLE IF NOT EXISTS Invoice_line
   ON UPDATE CASCADE
   ON DELETE CASCADE,
 
-  FOREIGN KEY(app_product_id) REFERENCES Application(app_id)
-  ON UPDATE CASCADE
-  ON DELETE CASCADE,
 
   PRIMARY KEY(line_id),
   KEY INVOICE_ID(invoice_id)
