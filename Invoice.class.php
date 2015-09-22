@@ -1,5 +1,22 @@
 <?php
-	
+	/**
+		Project:		fuInvoice
+		Description:	Invoice backend for web-applications
+
+		License:		Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+						http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+		File:			Invoice.class.php
+		File purpose:	The invoice backend to view and create fancy invoice stuff
+
+		Creator:		Fosen Utvikling AS
+		Contact:		post at fosen-utvikling dot as
+
+		Developers:		Jonas Kirkemyr
+						Robert Andresen
+	*/
+
+
 	namespace fuInvoice;
 
 
@@ -18,7 +35,7 @@
 
 
 
-		function dbConnect($host, $user, $pw, $dbname)
+		private function dbConnect($host, $user, $pw, $dbname)
 		{
 			// Create DB-instance
 			$mysqli = new \Mysqli($host, $user, $pw, $dbname);
@@ -135,19 +152,67 @@
 		 * @param 		Int		$p['kid'] 				KID - This will only return 1 invoice
 		 * @param 		Date	$p['time_from'] 		Time created from
 		 * @param 		Date	$p['time_to'] 			Time created to
-		 * @param 		Int		$p['status'] 			Invoice status
+		 * @param 		Int		$p['type'] 				Invoice type/status
 		 * @param 		Int		$p['customer_id'] 		app_c_id / Application customer ID
 		 * @return 		Array	$r 						Array with invoice-data
 		*/
-		public function getInvoices()
+		public function getInvoices($p=array())
 		{
 			$r = array();
+			$q = array();
 
 
-			$query = "SELECT * FROM Invoice WHERE app_id='{$this->App['app_id']}'";
-			/*echo '<pre>';
-				print_r($query);
-			echo '</pre>';*/
+			// Check parameters for query
+			if (isset($p['invoice_id']) && !empty($p['invoice_id'])) {
+				$q[] = "id='{$p['invoice_id']}'";
+			}
+
+			if (isset($p['kid']) && !empty($p['kid'])) {
+				$q[] = "kid='{$p['kid']}'";
+			}
+
+			if (isset($p['time_from']) && !empty($p['time_from'])) {
+				$q[] = "time_from > '{$p['time_from']}'";
+				// (date_field BETWEEN '2010-01-30 14:15:55' AND '2010-09-29 10:15:55')
+			}
+
+			if (isset($p['time_to']) && !empty($p['time_to'])) {
+				$q[] = "time_to < '{$p['time_to']}'";
+			}
+
+
+			if (isset($p['type']) && !empty($p['type'])) {
+				$q[] = "invoice_type='{$p['type']}'";
+			}
+
+			if (isset($p['customer_id']) && !empty($p['customer_id'])) {
+				$q[] = "app_receiver_id='{$p['customer_id']}'";
+			}
+
+
+			$nQ = count($q);
+			$c = 0;
+			$queryString = "";
+
+			if ($nQ > 0) {
+				$queryString = " AND (";
+				foreach ($q as $key => $value) {
+					$queryString .= $value;
+
+					$c++;
+					if ($c < $nQ) {
+						$queryString .= " AND ";
+					}
+				}
+				$queryString .= ")";
+			}
+
+
+
+
+			$query = "SELECT * 
+					  FROM Invoice 
+					  WHERE app_id='{$this->App['app_id']}' $queryString";
 
 			$result = $this->mysqli->query($query);
 			$numRows = $result->num_rows;
@@ -155,19 +220,19 @@
 			while ($d = $result->fetch_array()) {
 				$key = $d['id'];
 
-				$r[$key]['id'] = $d['id'];
+				//$r[$key]['data']['id'] = $d['id'];
 
-				$r[$key]['app']['app_id'] = $d['app_id'];
-				$r[$key]['app']['app_user_id'] = $d['app_user_id'];
-				$r[$key]['app']['app_receiver_id'] = $d['app_receiver_id'];
+				//$r[$key]['app']['app_id'] 		= $d['app_id']; // End-user does not need to know this
+				$r[$key]['app']['creator_user'] 	= $d['app_user_id'];
+				$r[$key]['app']['customer_id'] 		= $d['app_receiver_id'];
 
-				$r[$key]['invoice_id'] = $d['invoice_id'];
-				$r[$key]['kid'] = $d['kid'];
-				$r[$key]['time_created'] = $d['time_created'];
-				$r[$key]['time_sent'] = $d['time_sent'];
-				$r[$key]['time_due_date'] = $d['time_due_date'];
-				$r[$key]['idinvoice_type'] = $d['invoice_type'];
-				$r[$key]['invoice_ref'] = $d['invoice_ref'];
+				$r[$key]['data']['invoice_number'] 	= $d['invoice_id'];
+				$r[$key]['data']['kid'] 			= $d['kid'];
+				$r[$key]['data']['type'] 			= $d['invoice_type'];
+				$r[$key]['data']['invoice_ref'] 	= $d['invoice_ref'];
+				$r[$key]['data']['time']['created'] 	= $d['time_created'];
+				$r[$key]['data']['time']['due_date'] 	= $d['time_due_date'];
+				$r[$key]['data']['time']['sent']		= $d['time_sent'];
 
 				$r[$key]['sender']['sender_orgnumber'] 			= $d['sender_orgnumber'];
 				$r[$key]['sender']['sender_name'] 				= $d['sender_name'];
@@ -242,6 +307,42 @@
 				}
 
 			*/
+
+
+			$r = array();
+
+			$query = "INSERT INTO Invoice SET 
+						app_id='{$this->App['app_id']}', 
+						app_user_id='{$p['user_id']}', 
+						app_receiver_id='{$p['customer_id']}', 
+						time_due_date='{$p['due_date']}', 
+						invoice_type='draft', 
+						sender_orgnumber='{$p['sender_orgnumber']}', 
+						sender_name='{$p['sender_name']}', 
+						sender_address='{$p['sender_address']}', 
+						sender_zip='{$p['sender_zip']}', 
+						sender_location='{$p['sender_location']}', 
+						sender_ref='{$p['sender_ref']}', 
+						invoice_ref='{$p['invoice_ref']}', 
+						receiver_orgnumber='{$p['receiver_orgnumber']}', 
+						receiver_name='{$p['receiver_name']}', 
+						receiver_address='{$p['receiver_address']}', 
+						receiver_zip='{$p['receiver_zip']}', 
+						receiver_location='{$p['receiver_location']}', 
+						receiver_ref='{$p['receiver_ref']}', 
+						receiver_mail='{$p['receiver_mail']}'";
+			$result = $this->mysqli->query($query);
+
+			if ($result) {
+				$r['status'] = 'success';
+				$r['invoice_draft_id'] = $this->mysqli->insert_id;
+			} else {
+				$r['status'] = 'error';
+				$r['status'] = 'Could not write to database. Please check database and/or parameters.';
+			}
+
+			
+			return $r;
 		}
 
 
@@ -260,6 +361,54 @@
 		public function addInvoiceLine()
 		{
 
+		}
+
+
+		/**
+		 * Delete invoice
+		 *
+		 * @param 		Int		$p['id_invoice'] 		Incremental ID to invoice
+		 * @return 		Array	$r 						Array with status/data
+		*/
+		public function deleteInvoice($id)
+		{
+			$r = array();
+
+			// Check if ID exists
+			if (empty($id)) {
+				$r['status'] = 'error';
+				$r['status'] = 'ID missing';
+				return $r;
+			}
+
+
+			// Check invoice type/status
+			$p = array('invoice_id'=>$id);
+			$getInvoice = $this->getInvoices($p);
+
+			if ($getInvoice[$id]['data']['type'] != 'draft') {
+				$r['status'] = 'error';
+				$r['status'] = 'Invoice is sent and cannot be deleted';
+				return $r;
+			}
+
+
+			// Delete invoice
+			$query = "DELETE FROM Invoice 
+					  WHERE app_id='{$this->App['app_id']}' 
+					  	AND invoice_type LIKE 'draft'
+					  	AND id='$id'";
+			$result = $this->mysqli->query($query);
+
+			if ($result) {
+				$r['status'] = 'success';
+			} else {
+				$r['status'] = 'error';
+				$r['status'] = 'DB Error. Please check database and/or parameters.';
+			}
+
+			
+			return $r;
 		}
 
 
