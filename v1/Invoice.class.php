@@ -133,8 +133,22 @@
 			/*
 				$this->AppID
 				If id is provided => Check if draft and update
+				
 
-				Add lines to the invoice here?
+
+				Check if config for summing invoices is set, if yes {
+					Get draft invoice for $p['app_receiver_id']
+					Add lines to that draft
+				}
+				
+				else {
+					Check if $p['id'] exists: If yes => add line to that invoice
+				}
+
+				else {
+					Add lines to the invoice here?
+				}
+
 			*/
 		}
 
@@ -154,6 +168,20 @@
 		public function addInvoiceLine()
 		{
 
+		}
+
+
+		/**
+		 * Move invoice line
+		 * Move to another invoice
+		 * 
+		 * @param 		Int		$lineID 			ID for line to be moved
+		 * @param 		String	$invoiceID 			Target invoice to move to
+		 * @return 		Array	$r 					Array with status/data
+		*/
+		public function moveInvoiceLine($lineID, $invoiceID)
+		{
+			// Check if target invoice is draft.
 		}
 
 
