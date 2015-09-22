@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   app_id INT UNSIGNED NOT NULL,
   app_user_id MEDIUMINT UNSIGNED NOT NULL, /*16777215*/
-  app_c_id MEDIUMINT UNSIGNED NOT NULL, /* external customer id*/
+  app_receiver_id MEDIUMINT UNSIGNED NOT NULL, /* external customer id*/
   invoice_id INT UNSIGNED NOT NULL, /* the invoice number used*/
 
   kid INT UNSIGNED NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   sender_location VARCHAR(255) NOT NULL DEFAULT '',
   sender_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
 
-  invoice_ref VARCHAR(255) NOT NULL DEFAULT '',
+  invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
   receiver_orgnumber CHAR(9) NOT NULL DEFAULT '000000000',
   receiver_name VARCHAR(100) NOT NULL DEFAULT '',
