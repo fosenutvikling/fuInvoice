@@ -32,10 +32,12 @@ CREATE TABLE IF NOT EXISTS Invoice
   invoice_id INT UNSIGNED NOT NULL, /* the invoice number used*/
 
   kid INT UNSIGNED NOT NULL,
+  bank_account_number CHAR(11) NOT NULL DEFAULT '00000000000',
 
   time_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   time_sent TIMESTAMP NOT NULL DEFAULT 0,
-  time_due_date TIMESTAMP NOT NULL DEFAULT 0,
+  time_due_date DATE NOT NULL DEFAULT 0,
+  description TEXT NOT NULL DEFAULT '',
 
   invoice_type ENUM('draft','invoice','credit','reminder','dept') NOT NULL DEFAULT 'draft',
 
@@ -45,6 +47,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   sender_zip CHAR(4) NOT NULL DEFAULT '0000',
   sender_location VARCHAR(255) NOT NULL DEFAULT '',
   sender_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
+  sender_mail VARCHAR(255) NOT NULL DEFAULT '',
 
   invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
@@ -54,7 +57,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   receiver_zip CHAR(4) NOT NULL DEFAULT '0000',
   receiver_location VARCHAR(255) NOT NULL DEFAULT '',
   receiver_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
-  receiver_mail VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
+  receiver_mail VARCHAR(255) NOT NULL DEFAULT '', /*sender mail*/
 
   FOREIGN KEY(app_id) REFERENCES Application(app_id)
   ON UPDATE CASCADE
