@@ -15,4 +15,4 @@ Mockdata is found in `mock_data.sql` for test purpose only.
 
 
 ##License
-fuInvoice is licensed under the Apache License Version 2.0. See full description [here](LICENSE).
+fuInvoice is licensed under the Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0). See full description [here](LICENSE).
