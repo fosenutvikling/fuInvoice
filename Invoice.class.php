@@ -1,14 +1,37 @@
 <?php
 	
+	namespace fuInvoice;
+
+
 	/**
 	* Invoice class
 	*/
 	class Invoice
 	{
 		
-		function __construct($apiID)
+		function __construct($apiID, $host, $user, $pw, $dbname)
 		{
-			$this->AppID = $this->auth($apiID);
+			$this->mysqli 	= $this->dbConnect($host, $user, $pw, $dbname);
+			$this->App 		= $this->auth($apiID);
+		}
+
+
+
+
+		function dbConnect($host, $user, $pw, $dbname)
+		{
+			// Create DB-instance
+			$mysqli = new \Mysqli($host, $user, $pw, $dbname);
+
+			// Check for connection errors
+			if ($mysqli->connect_errno) {
+				die('Connect Error: ' . $mysqli->connect_errno);
+			}
+			
+			// Set DB charset
+			mysqli_set_charset($mysqli, "utf8");
+
+			return $mysqli;
 		}
 
 
@@ -21,7 +44,32 @@
 		*/
 		private function auth($apiID)
 		{
+			$r = array();
 
+			$query = "SELECT app_id, api_key, reader_api_key, role FROM Application WHERE (api_key LIKE '$apiID' OR reader_api_key LIKE '$apiID')";
+			$result = $this->mysqli->query($query);
+			$numRows = $result->num_rows;
+
+			if ($numRows > 0) {
+				$d = $result->fetch_array();
+
+				$r['app_id'] = $d['app_id'];
+
+				if ($apiID === $d['api_key']) $r['level'] = 1;
+				elseif ($apiID === $d['reader_api_key']) $r['level'] = 2;
+
+				$r['access'] = true;
+				$r['role'] = $d['role'];
+			}
+
+
+			else {
+				$r['access'] = false;
+				$r['status'] = 'error';
+				$r['message'] = 'No access';
+			}
+
+			return $r;
 		}
 
 
@@ -71,7 +119,7 @@
 		 * @param 		Int		$appID 		Application ID 
 		 * @return 		Array	$r 			Array with IPs 
 		*/
-		public function addWhitelist($appID)
+		public function getWhitelist($appID)
 		{
 
 		}
@@ -91,9 +139,53 @@
 		 * @param 		Int		$p['customer_id'] 		app_c_id / Application customer ID
 		 * @return 		Array	$r 						Array with invoice-data
 		*/
-		public function getInvoices($p)
+		public function getInvoices()
 		{
-			// Use auth to fetch appID
+			$r = array();
+
+
+			$query = "SELECT * FROM Invoice WHERE app_id='{$this->App['app_id']}'";
+			/*echo '<pre>';
+				print_r($query);
+			echo '</pre>';*/
+
+			$result = $this->mysqli->query($query);
+			$numRows = $result->num_rows;
+
+			while ($d = $result->fetch_array()) {
+				$key = $d['id'];
+
+				$r[$key]['id'] = $d['id'];
+
+				$r[$key]['app']['app_id'] = $d['app_id'];
+				$r[$key]['app']['app_user_id'] = $d['app_user_id'];
+				$r[$key]['app']['app_receiver_id'] = $d['app_receiver_id'];
+
+				$r[$key]['invoice_id'] = $d['invoice_id'];
+				$r[$key]['kid'] = $d['kid'];
+				$r[$key]['time_created'] = $d['time_created'];
+				$r[$key]['time_sent'] = $d['time_sent'];
+				$r[$key]['time_due_date'] = $d['time_due_date'];
+				$r[$key]['idinvoice_type'] = $d['invoice_type'];
+				$r[$key]['invoice_ref'] = $d['invoice_ref'];
+
+				$r[$key]['sender']['sender_orgnumber'] 			= $d['sender_orgnumber'];
+				$r[$key]['sender']['sender_name'] 				= $d['sender_name'];
+				$r[$key]['sender']['sender_address'] 			= $d['sender_address'];
+				$r[$key]['sender']['sender_zip'] 				= $d['sender_zip'];
+				$r[$key]['sender']['sender_location'] 			= $d['sender_location'];
+				$r[$key]['sender']['sender_ref'] 				= $d['sender_ref'];
+
+				$r[$key]['receiver']['receiver_orgnumber']	 	= $d['receiver_orgnumber'];
+				$r[$key]['receiver']['receiver_name'] 			= $d['receiver_name'];
+				$r[$key]['receiver']['receiver_address'] 		= $d['receiver_address'];
+				$r[$key]['receiver']['receiver_zip'] 			= $d['receiver_zip'];
+				$r[$key]['receiver']['receiver_location'] 		= $d['receiver_location'];
+				$r[$key]['receiver']['receiver_ref'] 			= $d['receiver_ref'];
+				$r[$key]['receiver']['receiver_mail'] 			= $d['receiver_mail'];
+			}
+
+			return $r;
 		}
 
 
