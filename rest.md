@@ -1,0 +1,1 @@
+#REST Documentation for fuInvoice
