@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS Invoice_line
 (
   line_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   invoice_id INT UNSIGNED NOT NULL,/*fk invoice */
-  app_product_id VARCHAR(25) NOT NULL DEFAULT '', /* product id which the order line referes to*/
+  app_product_id INT UNSIGNED NOT NULL DEFAULT 0,/* refer to external product id saved on client side*/
+  app_account_number INT UNSIGNED NOT NULL DEFAULT 0,/*The application account number to link to (konto)*/
 
   description TEXT NOT NULL DEFAULT '',
   quantity FLOAT UNSIGNED NOT NULL DEFAULT 0,
@@ -86,7 +87,8 @@ CREATE TABLE IF NOT EXISTS Invoice_line
 
 
   PRIMARY KEY(line_id),
-  KEY INVOICE_ID(invoice_id)
+  KEY INVOICE_ID(invoice_id),
+  KEY APPLICATION_ID(app_account_number)
 
 )ENGINE=InnoDB;
 
