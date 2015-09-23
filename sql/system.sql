@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS Invoice
 
   invoice_type ENUM('draft','invoice','credit','reminder','dept') NOT NULL DEFAULT 'draft',
 
-  sender_orgnumber CHAR(9) NOT NULL DEFAULT '000000000',
+  sender_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   sender_name VARCHAR(100) NOT NULL DEFAULT '',
   sender_address VARCHAR(255) NOT NULL DEFAULT '',
   sender_zip CHAR(4) NOT NULL DEFAULT '0000',
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS Invoice
 
   invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
-  receiver_orgnumber CHAR(9) NOT NULL DEFAULT '000000000',
+  receiver_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   receiver_name VARCHAR(100) NOT NULL DEFAULT '',
   receiver_address VARCHAR(255) NOT NULL DEFAULT '',
   receiver_zip CHAR(4) NOT NULL DEFAULT '0000',

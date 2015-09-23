@@ -110,8 +110,7 @@ class InvoicePDF extends PDF
      * todo: support multilanguage
      */
     private function appendRightColumn()
-    {//todo: append isMVA to db? append to account number
-
+    {
         $right_column = '<style>';
             $right_column .= 'div.headlineContainer {text-align: right;color: #222222;font-size: 24pt;font-weight:normal;width:50%;border-bottom:1px solid #eaeaea;}';
             $right_column .= 'div.customerSenderBox{color:#222;border-bottom:1px solid #eaeaea;}';
@@ -129,7 +128,7 @@ class InvoicePDF extends PDF
             $right_column .= '</div>';
 
             $right_column.='<div>';
-                $right_column.='Foretaksregisteret '.$this->invoiceData['sender']['orgnumber'].' '.$this->invoiceData['data']['isMVA'];
+                $right_column.='Foretaksregisteret '.$this->invoiceData['sender']['orgnumber'];
             $right_column.='</div>';
 
             $right_column.='<div>';
