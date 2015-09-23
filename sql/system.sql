@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   sender_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
   sender_mail VARCHAR(255) NOT NULL DEFAULT '',
   sender_webpage VARCHAR(255) NOT NULL DEFAULT '',
+  sender_vat_registered TINYINT(1) NOT NULL DEFAULT 0,/* whether sender is vat-registered (append MVA at invoice*/
 
   invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
