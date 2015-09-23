@@ -30,6 +30,10 @@
 		{
 			$this->mysqli 	= $this->dbConnect($host, $user, $pw, $dbname);
 			$this->App 		= $this->auth($apiID);
+
+			$this->mail_reply_name 		= 'FU Invoice';
+			$this->mail_reply_address 	= 'post@fosen-utvikling.no';
+			$this->mail_sender_address 	= 'post@fosen-utvikling.no';
 		}
 
 
@@ -234,20 +238,43 @@
 				$r[$key]['data']['time']['due_date'] 	= $d['time_due_date'];
 				$r[$key]['data']['time']['sent']		= $d['time_sent'];
 
-				$r[$key]['sender']['sender_orgnumber'] 			= $d['sender_orgnumber'];
-				$r[$key]['sender']['sender_name'] 				= $d['sender_name'];
-				$r[$key]['sender']['sender_address'] 			= $d['sender_address'];
-				$r[$key]['sender']['sender_zip'] 				= $d['sender_zip'];
-				$r[$key]['sender']['sender_location'] 			= $d['sender_location'];
-				$r[$key]['sender']['sender_ref'] 				= $d['sender_ref'];
+				$r[$key]['sender']['orgnumber'] 		= $d['sender_orgnumber'];
+				$r[$key]['sender']['name'] 				= $d['sender_name'];
+				$r[$key]['sender']['address'] 			= $d['sender_address'];
+				$r[$key]['sender']['zip'] 				= $d['sender_zip'];
+				$r[$key]['sender']['location'] 			= $d['sender_location'];
+				$r[$key]['sender']['ref'] 				= $d['sender_ref'];
 
-				$r[$key]['receiver']['receiver_orgnumber']	 	= $d['receiver_orgnumber'];
-				$r[$key]['receiver']['receiver_name'] 			= $d['receiver_name'];
-				$r[$key]['receiver']['receiver_address'] 		= $d['receiver_address'];
-				$r[$key]['receiver']['receiver_zip'] 			= $d['receiver_zip'];
-				$r[$key]['receiver']['receiver_location'] 		= $d['receiver_location'];
-				$r[$key]['receiver']['receiver_ref'] 			= $d['receiver_ref'];
-				$r[$key]['receiver']['receiver_mail'] 			= $d['receiver_mail'];
+				$r[$key]['receiver']['orgnumber']	 	= $d['receiver_orgnumber'];
+				$r[$key]['receiver']['name'] 			= $d['receiver_name'];
+				$r[$key]['receiver']['address'] 		= $d['receiver_address'];
+				$r[$key]['receiver']['zip'] 			= $d['receiver_zip'];
+				$r[$key]['receiver']['location'] 		= $d['receiver_location'];
+				$r[$key]['receiver']['ref'] 			= $d['receiver_ref'];
+				$r[$key]['receiver']['mail'] 			= $d['receiver_mail'];
+
+
+
+				// Invoice lines
+				$invoiceLines = $this->getInvoiceLines($d['id']);
+
+				$r[$key]['data']['sum']['total'] = 0;
+				$r[$key]['data']['sum']['total_incl_vat'] = 0;
+
+				// Loop lines to calculate sum
+				if (count($invoiceLines) > 0) {
+					foreach ($invoiceLines as $lID => $lData) {
+
+						if ($lData['discount'] == 0) $lData['discount'] = 1;
+
+						$r[$key]['data']['sum']['total'] 			+= ($lData['sum_price']);
+						$r[$key]['data']['sum']['total_incl_vat'] 	+= ($lData['sum_price_incl_vat']);
+					}
+				}
+
+
+				$r[$key]['lines'] = $invoiceLines;
+
 			}
 
 			return $r;
@@ -336,6 +363,23 @@
 			if ($result) {
 				$r['status'] = 'success';
 				$r['invoice_draft_id'] = $this->mysqli->insert_id;
+
+
+
+				// Add invoice lines
+				// Check if lines are included in parameter set
+				if (isset($p['lines']) && count($p['lines']) > 0) {
+
+					// Loop lines
+					foreach ($p['lines'] as $key => $lData) {
+						$lData['id_invoice'] = $r['invoice_draft_id']; // Set idInvoice
+
+						// Add single line
+						$result_add_line = $this->addInvoiceLine($lData);
+						$r['status_add_line'][$key] = $result_add_line;
+					}
+				}
+
 			} else {
 				$r['status'] = 'error';
 				$r['status'] = 'Could not write to database. Please check database and/or parameters.';
@@ -344,6 +388,51 @@
 			
 			return $r;
 		}
+
+
+
+		public function getInvoiceLines($idInvoice)
+		{
+			$r = array();
+
+			$query = "SELECT * 
+					  FROM Invoice_line 
+					  WHERE invoice_id='$idInvoice'";
+
+			$result = $this->mysqli->query($query);
+			$numRows = $result->num_rows;
+
+			$sum_total = 0;
+			$sum_total_incl_discount = 0;
+
+			while ($d = $result->fetch_array()) {
+				$key = $d['line_id'];
+
+				$r[$key]['app']['product_id'] 		= $d['app_product_id'];
+				$r[$key]['app']['account_number'] 	= $d['app_account_number'];
+				$r[$key]['description'] 			= $d['description'];
+				$r[$key]['quantity'] 				= $d['quantity'];
+				$r[$key]['price'] 					= $d['price'];
+				$r[$key]['discount'] 				= $d['discount'];
+				$r[$key]['vat'] 					= $d['mva'];
+
+
+				$setDiscount = ($d['discount'] / 100);
+				if ($setDiscount == 0) $setDiscount = 1;
+
+				$setVAT = ($d['mva'] / 100);
+				if ($setVAT == 0) $setVAT = 1;
+
+				$sum = ($d['price'] * $d['quantity']) * $setDiscount;
+				$sumVAT = $sum * $setVAT;
+
+				$r[$key]['sum_price']					= $sum;
+				$r[$key]['sum_price_incl_vat']			= ($sum + $sumVAT);
+			}
+
+			return $r;
+		}
+
 
 
 		/**
@@ -358,9 +447,36 @@
 		 * @param 		Double	$p['vat'] 				Taxes
 		 * @return 		Array	$r 						Array with status/data
 		*/
-		public function addInvoiceLine()
+		public function addInvoiceLine($p)
 		{
+			$r = array();
 
+			// Change any commas
+			$p['price'] 	= str_replace(',', '.', $p['price']);
+			$p['discount'] 	= str_replace(',', '.', $p['discount']);
+			$p['vat'] 		= str_replace(',', '.', $p['vat']);
+
+			$query = "INSERT INTO Invoice_line SET 
+						invoice_id='{$p['id_invoice']}', 
+						app_product_id='{$p['product_id']}', 
+						description='{$p['description']}', 
+						quantity='{$p['qty']}', 
+						price='{$p['price']}', 
+						discount='{$p['discount']}', 
+						mva='{$p['vat']}', 
+						app_account_number='{$p['account_number']}'";
+			$result = $this->mysqli->query($query);
+
+			if ($result) {
+				$r['status'] = 'success';
+				$r['line_id'] = $this->mysqli->insert_id;
+			} else {
+				$r['status'] = 'error';
+				$r['status'] = 'Could not write to database. Please check database and/or parameters.';
+			}
+
+			
+			return $r;
 		}
 
 
@@ -377,7 +493,7 @@
 			// Check if ID exists
 			if (empty($id)) {
 				$r['status'] = 'error';
-				$r['status'] = 'ID missing';
+				$r['message'] = 'ID missing';
 				return $r;
 			}
 
@@ -386,9 +502,15 @@
 			$p = array('invoice_id'=>$id);
 			$getInvoice = $this->getInvoices($p);
 
+			if (count($getInvoice) == 0) {
+				$r['status'] = 'error';
+				$r['message'] = 'Invoice does not exist';
+				return $r;
+			}
+
 			if ($getInvoice[$id]['data']['type'] != 'draft') {
 				$r['status'] = 'error';
-				$r['status'] = 'Invoice is sent and cannot be deleted';
+				$r['message'] = 'Invoice is sent and cannot be deleted';
 				return $r;
 			}
 
@@ -404,7 +526,7 @@
 				$r['status'] = 'success';
 			} else {
 				$r['status'] = 'error';
-				$r['status'] = 'DB Error. Please check database and/or parameters.';
+				$r['message'] = 'DB Error. Please check database and/or parameters.';
 			}
 
 			
@@ -437,11 +559,83 @@
 		 * @param 		Boolean		$ehf 			UNSUPPORTED (Default false) True = send by mail/postal
 		 * @return 		Array		$r 				Array with status/data
 		*/
-		public function sendInvoice($idInvoice, $mail=true, $postal=false, $ehf=false)
+		public function sendInvoice($idInvoice, $type='invoice', $mail=true, $postal=false, $ehf=false)
 		{
 			// Get next invoice ID $this->getInvoiceNextID();
 			// Generate KID
 			// Send
+
+			$r = array();
+
+			// Check if ID exists
+			if (empty($idInvoice)) {
+				$r['status'] = 'error';
+				$r['status'] = 'ID missing';
+				return $r;
+			}
+
+
+			// Check invoice type/status
+			$p = array('invoice_id'=>$idInvoice);
+			$getInvoice = $this->getInvoices($p);
+
+
+
+			// Generate ID and KID - if draft
+			if ($getInvoice[$idInvoice]['data']['type'] == 'draft') {
+				// Get next invoice number
+				$invoiceID = $this->getInvoiceNextID();
+
+				// Generate KID
+				$KID = $this->generateKID($invoiceID, $type='MOD10');
+
+
+				// Update invoice status
+				$query = "UPDATE Invoice SET 
+							invoice_id='$invoiceID', 
+							kid='$KID', 
+							time_sent = '".date('Y-m-d H:i:s')."',
+							invoice_type='$type' 
+							WHERE id='$idInvoice'";
+				$result = $this->mysqli->query($query);
+			}
+
+
+			// Re-send
+			else {
+				$result = true;
+				$invoiceID = $getInvoice[$idInvoice]['data']['invoice_number'];
+				$KID = $getInvoice[$idInvoice]['data']['kid'];
+			}
+
+
+
+			// Send invoice and return status to client
+			if ($result) {
+				$r['status'] = 'success';
+				$r['invoice_number'] = $invoiceID;
+				$r['invoice_kid'] = $KID;
+
+				if ($mail && !empty($getInvoice[$idInvoice]['receiver']['mail'])) {
+
+					$subject = "Invoice #$invoiceID";
+					$message = "Hi {$getInvoice[$idInvoice]['receiver']['name']}!<br /><br />";
+					$message .= "This is a new invoice.<br /><br />";
+					$message .= "<b>Invoice ID:</b> #$invoiceID<br />";
+					$message .= "<b>KID:</b> $KID<br />";
+					$message .= "<b>Due date:</b> {$getInvoice[$idInvoice]['data']['time']['due_date']}<br />";
+					$message .= "<b>SUM:</b> Not supported yet<br />";
+					$message .= "<br /><b>Best regards,</b><br />{$getInvoice[$idInvoice]['sender']['name']}";
+
+					$mailResult = $this->sendMail($getInvoice[$idInvoice]['receiver']['mail'], $subject, $message);
+					$r['status_mail'] = $mailResult;
+				}
+			} else {
+				$r['status'] = 'error';
+				$r['status'] = 'DB Error. Please check database and/or parameters.';
+			}
+
+			return $r;
 		}
 
 
@@ -452,19 +646,24 @@
 		*/
 		private function getInvoiceNextID()
 		{
+			$query = "SELECT invoice_id 
+					  FROM Invoice 
+					  WHERE app_id='{$this->App['app_id']}'
+					  ORDER BY invoice_id DESC";
 
+			$result = $this->mysqli->query($query);
+			$numRows = $result->num_rows;
+
+			if ($numRows == 0) {
+				return 1;
+			}
+
+			else {
+				$d = $result->fetch_array();
+				return ($d['invoice_id'] + 1);
+			}
 		}
 
-
-		/**
-		 * Generate invoice KID
-		 *
-		 * @return 		Int		$kid 			KID number
-		*/
-		private function generateKID()
-		{
-
-		}
 
 
 		/**
@@ -502,6 +701,76 @@
 		public function makeDeptCollection($fee)
 		{
 
+		}
+
+
+		/**
+		 * Generate KID
+		 * Supports only MOD10 at this moment
+		 *
+		 * @param 		Int		$invoicenumber 		The invoice number/ID
+		 * @return 		String	$type 				Default MOD10
+		*/
+		private function generateKID($invoicenumber, $type='MOD10')
+		{
+			if ($type == 'MOD10') {
+				$siffer = str_split(strrev($invoicenumber));
+				$sum = 0;
+
+				for($i=0; $i<count($siffer); ++$i) $sum += $this->checksum(( $i & 1 ) ? $siffer[$i] * 1 : $siffer[$i] * 2);
+				
+				$checksumInt = ($sum==0) ? 0 : substr(10 - substr($sum, -1),-1);
+
+				return $invoicenumber . $checksumInt;
+			}
+
+			else {
+				$r = array();
+				$r['status'] = 'error';
+				$r['message'] = 'No type provided to generate new KID';
+				return $r;
+			}
+		}
+
+
+
+		/**
+		 * Return checksum for KID generation
+		 *
+		 * @param 		Int		$int 		Input INT to return checksum for
+		 * @return 		Int 				The checksum
+		*/
+		private function checksum($int)
+		{
+			return array_sum(str_split($int));
+		}
+
+
+		/**
+		 * Send Mail
+		 *
+		 * @param 		String		$to 		Receiver mailaddress
+		 * @param 		String		$subject 	Mail-subject
+		 * @param 		String		$message 	Mail-message
+		 * @return 		Boolean				 	True/false for if mail is sent
+		*/
+		private function sendMail($to, $subject, $message) {
+
+			// UTF-8 decoode to support characters like norwegian ÆØÅ
+			$subject = utf8_decode($subject);
+			$message = utf8_decode($message);
+
+			$message = "<span style='font-family:Sans-serif; font-size:12px;'>" . $message . "</span>";
+
+			$headers = "Content-type: text/html; charset=iso-8859-1" . "\r\n";
+			$headers .= "From: {$this->mail_reply_name} <{$this->mail_sender_address}>" . "\r\n";
+			$headers .= "Return-Path: {$this->mail_reply_name} <{$this->mail_reply_address}>" . "\r\n";
+			$headers .= "Reply-To: {$this->mail_reply_address}" . "\r\n";
+			$headers .= "X-Mailer: PHP/" . phpversion();
+
+			$result = mail($to, $subject, $message, $headers);
+
+			return $result;
 		}
 
 

@@ -76,6 +76,40 @@
 		$duedate = strtotime("+7 day", time());
 		$duedate = date('Y-m-d', $duedate);
 
+
+		$lines = array(
+			array (
+				'id_invoice' => '',
+				'product_id' => rand(1,999),
+				'description' => 'Produkt ' . rand(11,99),
+				'qty' => rand(1,6),
+				'price' => rand(1,999),
+				'discount' => 0,
+				'vat' => 25,
+				'account_number' => rand(1111,9999),
+			),
+			array (
+				'id_invoice' => '',
+				'product_id' => rand(1,999),
+				'description' => 'Produkt ' . rand(11,99),
+				'qty' => rand(1,6),
+				'price' => rand(1,999),
+				'discount' => 0,
+				'vat' => 25,
+				'account_number' => rand(1111,9999),
+			),
+			array (
+				'id_invoice' => '',
+				'product_id' => rand(1,999),
+				'description' => 'Produkt ' . rand(11,99),
+				'qty' => rand(1,6),
+				'price' => rand(1,999),
+				'discount' => 0,
+				'vat' => 25,
+				'account_number' => rand(1111,9999),
+			),
+		);
+
 		$p = array (
 			'user_id' => '1',
 			'customer_id' => '43',
@@ -93,7 +127,8 @@
 			'receiver_zip' => '7105',
 			'receiver_location' => 'Stadsbygd',
 			'receiver_ref' => '5REF',
-			'receiver_mail' => 'ra@stadsbygd.net',
+			'receiver_mail' => 'jonas.kirkemyr@fosen-utvikling.no',
+			'lines' => $lines,
 		);
 
 		$result = $obj->addInvoice($p);
@@ -106,6 +141,13 @@
 	// Get invoices
 	if ($action == 'deleteInvoice') {
 		$result = $obj->deleteInvoice($_GET['id']);
+		echo json_encode($result);
+	}
+
+
+	// Send invoices
+	if ($action == 'sendInvoice') {
+		$result = $obj->sendInvoice($_GET['id']);
 		echo json_encode($result);
 	}
 
