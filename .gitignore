@@ -2,3 +2,4 @@
 config.php
 sftp-config.json
 vendor
+demo/packages
