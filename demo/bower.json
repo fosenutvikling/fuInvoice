@@ -1,0 +1,22 @@
+{
+  "name": "fuInvoice",
+  "version": "0.1.0",
+  "homepage": "https://github.com/fosenutvikling/fuInvoice",
+  "authors": [
+    "Jonas Kirkemyr <jonas@fosen-utvikling.no>",
+    "Robert Andresen <ra@fosen-utvikling.no>"
+  ],
+  "description": "REST invoice system",
+  "main": "index.php",
+  "license": "CC BY-NC-SA 4.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-datepicker": "https://github.com/eternicode/bootstrap-datepicker.git#~1.4.1"
+  }
+}
