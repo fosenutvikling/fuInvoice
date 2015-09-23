@@ -5,7 +5,7 @@
 
 
 
-<form action="../<?php echo $base_url; ?>&action=addInvoice" method="POST">
+<form action="<?php echo $base_url; ?>&action=addInvoice" method="POST">
 
 	<h2 style="margin-top:50px;">New invoice</h2>
 	<div style="border:1px solid #eaeaea; padding:20px; margin-bottom:30px;">

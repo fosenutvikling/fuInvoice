@@ -146,6 +146,26 @@
 		}
 
 
+
+		/**
+		 * Get single invoice
+		 * Uses getInvoices and return array without key
+		 *
+		 * @uses getInvoices()
+		 *
+		 * @param 		Int		$idInvoice 		Invoice ID
+		 * @return 		Array	$r 				Array with invoice-data
+		*/
+		public function getInvoice($idInvoice)
+		{
+			$p['invoice_id'] = $idInvoice;
+			$thisInvoice = $this->getInvoices($p);
+			return $thisInvoice[$idInvoice];
+		}
+
+
+		
+
 		/**
 		 * Get invoices
 		 * Fetch appID from auth()

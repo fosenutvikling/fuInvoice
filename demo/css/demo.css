@@ -4,13 +4,32 @@ form label {
 	font-weight: 700;
 }
 
-.nav {
-	margin-top:20px;
-	margin-bottom:20px;
+.navbar-default .navbar-brand, 
+.navbar-default .navbar-brand a
+{
+	color: #2196f3;
+	font-weight:200;
+	font-size: 30px;
 }
 
-.nav a {
+.nav {
+	
+}
+
+.navbar {
+	-webkit-box-shadow: 0px;
+	box-shadow: none;
+	border-bottom: 1px solid #eaeaea;
+}
+
+/*.nav a {
 	text-decoration: none;
 	display: inline-block;
 	margin-right: 25px;
-}
+}*/
+
+
+h1, h2, h3, h4, h5, h6 { color: #2196f3; }
+
+h1 { font-size:30px; font-weight:200; }
+h2 { font-size:20px; font-weight:200; }
