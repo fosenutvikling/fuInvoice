@@ -16,6 +16,8 @@
 						Robert Andresen
 	*/
     require __DIR__ . '/vendor/autoload.php';
+    require_once __DIR__.'/PDF/PDF.php';
+    require_once __DIR__.'/PDF/InvoicePDF.php';
 
 	header('Content-Type: application/json');
 
@@ -151,6 +153,11 @@
 		$result = $obj->sendInvoice($_GET['id']);
 		echo json_encode($result);
 	}
+
+    if($action==='getPDF')
+    {
+        $obj->getPDF($_GET['id']);
+    }
 
 
 ?>

@@ -73,7 +73,7 @@
 
 						&nbsp; 
 
-						<a href="#" data-toggle="tooltip" data-placement="top" title="Open PDF">
+						<a href="<?php echo $base_url; ?>&action=getPDF&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Open PDF">
 							<i class="fa fa-file-pdf-o"></i>
 						</a>
 

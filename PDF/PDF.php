@@ -1,12 +1,23 @@
 <?php
 
 /**
- * fuInvoice.
- * User: Jonas
- * Date: 22.09.2015
- * Time: 22.22
- * InvoicePDF.php
+Project:		fuInvoice
+Description:	Invoice backend for web-applications
+
+License:		Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+File:			PDF.php
+File purpose:	General PDF class for setting configuration for the pdf file
+                File needs to be inherited and implement any abstract methods
+
+Creator:		Fosen Utvikling AS
+Contact:		post at fosen-utvikling dot as
+
+Developers:		Jonas Kirkemyr
+                Robert Andresen
  */
+
 namespace fuInvoice\PDF;
 
 use TCPDF;
@@ -92,7 +103,7 @@ abstract class PDF
      */
     public function toString()
     {
-        $this->tcpdf->Output(self::$filename,'S');
+        return $this->tcpdf->Output(self::$filename,'S');
     }
 
     /**
