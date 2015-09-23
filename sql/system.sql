@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   sender_location VARCHAR(255) NOT NULL DEFAULT '',
   sender_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
   sender_mail VARCHAR(255) NOT NULL DEFAULT '',
+  sender_webpage VARCHAR(255) NOT NULL DEFAULT '',
 
   invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
