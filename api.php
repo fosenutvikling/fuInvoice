@@ -74,62 +74,34 @@
 	// Get invoices
 	if ($action == 'addInvoice') {
 
-		$duedate = strtotime("+7 day", time());
-		$duedate = date('Y-m-d', $duedate);
+		if (isset($_POST['lines']) && count($_POST['lines']) > 0) {
+			$p['lines'] = $_POST['lines'];
+		}
 
-
-		$lines = array(
-			array (
-				'id_invoice' => '',
-				'product_id' => rand(1,999),
-				'description' => 'Produkt ' . rand(11,99),
-				'qty' => rand(1,6),
-				'price' => rand(1,999),
-				'discount' => 0,
-				'vat' => 25,
-				'account_number' => rand(1111,9999),
-			),
-			array (
-				'id_invoice' => '',
-				'product_id' => rand(1,999),
-				'description' => 'Produkt ' . rand(11,99),
-				'qty' => rand(1,6),
-				'price' => rand(1,999),
-				'discount' => 0,
-				'vat' => 25,
-				'account_number' => rand(1111,9999),
-			),
-			array (
-				'id_invoice' => '',
-				'product_id' => rand(1,999),
-				'description' => 'Produkt ' . rand(11,99),
-				'qty' => rand(1,6),
-				'price' => rand(1,999),
-				'discount' => 0,
-				'vat' => 25,
-				'account_number' => rand(1111,9999),
-			),
-		);
 
 		$p = array (
-			'user_id' => '1',
-			'customer_id' => '43',
-			'due_date' => $duedate,
-			'sender_orgnumber' => '998871212',
-			'sender_name' => 'Fosen Utvikling AS',
-			'sender_address' => 'Rådhusveien 18',
-			'sender_zip' => '7100',
-			'sender_location' => 'Rissa',
-			'sender_ref' => 'Robert Andresen',
+			'user_id' => $_POST['user_id'],
+			'customer_id' => $_POST['customer_id'],
+			'due_date' => $_POST['due_date'],
+			'bank_account_number' => $_POST['bank_account_number'],
+			'description' => $_POST['description'],
+			'sender_orgnumber' => $_POST['sender_orgnumber'],
+			'sender_name' => $_POST['sender_name'],
+			'sender_address' =>  $_POST['sender_address'],
+			'sender_zip' =>  $_POST['sender_zip'],
+			'sender_location' =>  $_POST['sender_postal'],
+			'sender_ref' => $_POST['sender_ref'],
+			'sender_mail' => $_POST['sender_mail'],
+			'sender_webpage' => $_POST['sender_webpage'],
 			'invoice_ref' => '',
-			'receiver_orgnumber' => '123456789',
-			'receiver_name' => 'Testkunde',
-			'receiver_address' => 'Bortiveien 44',
-			'receiver_zip' => '7105',
-			'receiver_location' => 'Stadsbygd',
-			'receiver_ref' => '5REF',
-			'receiver_mail' => 'jonas.kirkemyr@fosen-utvikling.no',
-			'lines' => $lines,
+			'receiver_orgnumber' => $_POST['receiver_orgnumber'],
+			'receiver_name' => $_POST['receiver_name'],
+			'receiver_address' => $_POST['receiver_address'],
+			'receiver_zip' => $_POST['receiver_zip'],
+			'receiver_location' => $_POST['receiver_postal'],
+			'receiver_ref' => $_POST['receiver_ref'],
+			'receiver_mail' => $_POST['receiver_mail'],
+			'lines' => $p['lines'],
 		);
 
 		$result = $obj->addInvoice($p);

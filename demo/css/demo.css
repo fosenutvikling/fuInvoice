@@ -1,5 +1,16 @@
-.form-group label {
+form label {
 	font-size:10px;
 	color: #888;
 	font-weight: 700;
+}
+
+.nav {
+	margin-top:20px;
+	margin-bottom:20px;
+}
+
+.nav a {
+	text-decoration: none;
+	display: inline-block;
+	margin-right: 25px;
 }

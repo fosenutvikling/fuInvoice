@@ -67,7 +67,7 @@
 					</td>
 
 					<td>
-						<a href="invoice.php?id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Preview in browser">
+						<a href="?page=invoice&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Preview in browser">
 							<i class="fa fa-file-text-o"></i>
 						</a>
 
@@ -79,13 +79,13 @@
 
 						&nbsp; 
 
-						<a href="<?php echo $base_url; ?>&action=deleteInvoice&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Delete this invoice">
+						<a href="../<?php echo $base_url; ?>&action=deleteInvoice&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Delete this invoice">
 							<i class="fa fa-trash"></i>
 						</a>
 
 						&nbsp;
 
-						<a href="<?php echo $base_url; ?>&action=sendInvoice&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Generate invoice number and kid, and send to receiver mail">
+						<a href="../<?php echo $base_url; ?>&action=sendInvoice&id=<?php echo $iID; ?>" data-toggle="tooltip" data-placement="top" title="Generate invoice number and kid, and send to receiver mail">
 							<i class="fa fa-envelope"></i>
 						</a>
 					</td>
