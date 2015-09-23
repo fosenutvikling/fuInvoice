@@ -227,37 +227,37 @@
 
 				//$r[$key]['data']['id'] = $d['id'];
 
-				//$r[$key]['app']['app_id'] 		= $d['app_id']; // End-user does not need to know this
-				$r[$key]['app']['creator_user'] 	= $d['app_user_id'];
-				$r[$key]['app']['customer_id'] 		= $d['app_receiver_id'];
+				//$r[$key]['app']['app_id'] 				= $d['app_id']; // End-user does not need to know this
+				$r[$key]['app']['creator_user'] 			= $d['app_user_id'];
+				$r[$key]['app']['customer_id'] 				= $d['app_receiver_id'];
 
-				$r[$key]['data']['invoice_number'] 	= $d['invoice_id'];
-				$r[$key]['data']['kid'] 			= $d['kid'];
-				$r[$key]['data']['type'] 			= $d['invoice_type'];
+				$r[$key]['data']['invoice_number'] 			= $d['invoice_id'];
 				$r[$key]['data']['description'] 			= $d['description'];
-				$r[$key]['data']['bank_account_number'] 			= $d['bank_account_number'];
-				$r[$key]['data']['invoice_ref'] 	= $d['invoice_ref'];
-				$r[$key]['data']['isMVA'] 	= true;
-				$r[$key]['data']['time']['created'] 	= $d['time_created'];
-				$r[$key]['data']['time']['due_date'] 	= $d['time_due_date'];
-				$r[$key]['data']['time']['sent']		= $d['time_sent'];
+				$r[$key]['data']['kid'] 					= $d['kid'];
+				$r[$key]['data']['bank_account_number'] 	= $d['bank_account_number'];
+				$r[$key]['data']['type'] 					= $d['invoice_type'];
+				$r[$key]['data']['invoice_ref'] 			= $d['invoice_ref'];
+				$r[$key]['data']['time']['created'] 		= $d['time_created'];
+				$r[$key]['data']['time']['due_date'] 		= $d['time_due_date'];
+				$r[$key]['data']['time']['sent']			= $d['time_sent'];
 
-				$r[$key]['sender']['orgnumber'] 		= $d['sender_orgnumber'];
-				$r[$key]['sender']['name'] 				= $d['sender_name'];
-				$r[$key]['sender']['address'] 			= $d['sender_address'];
-				$r[$key]['sender']['zip'] 				= $d['sender_zip'];
-				$r[$key]['sender']['location'] 			= $d['sender_location'];
-				$r[$key]['sender']['ref'] 				= $d['sender_ref'];
-				$r[$key]['sender']['mail'] 				= $d['sender_mail'];
+				$r[$key]['sender']['orgnumber'] 			= $d['sender_orgnumber'];
+				$r[$key]['sender']['name'] 					= $d['sender_name'];
+				$r[$key]['sender']['address'] 				= $d['sender_address'];
+				$r[$key]['sender']['zip'] 					= $d['sender_zip'];
+				$r[$key]['sender']['location'] 				= $d['sender_location'];
+				$r[$key]['sender']['ref'] 					= $d['sender_ref'];
+				$r[$key]['sender']['mail'] 					= $d['sender_mail'];
 				$r[$key]['sender']['webpage'] 				= $d['sender_webpage'];
 
-				$r[$key]['receiver']['orgnumber']	 	= $d['receiver_orgnumber'];
-				$r[$key]['receiver']['name'] 			= $d['receiver_name'];
-				$r[$key]['receiver']['address'] 		= $d['receiver_address'];
-				$r[$key]['receiver']['zip'] 			= $d['receiver_zip'];
-				$r[$key]['receiver']['location'] 		= $d['receiver_location'];
-				$r[$key]['receiver']['ref'] 			= $d['receiver_ref'];
-				$r[$key]['receiver']['mail'] 			= $d['receiver_mail'];
+				$r[$key]['receiver']['orgnumber']	 		= $d['receiver_orgnumber'];
+				$r[$key]['receiver']['name'] 				= $d['receiver_name'];
+				$r[$key]['receiver']['address'] 			= $d['receiver_address'];
+				$r[$key]['receiver']['zip'] 				= $d['receiver_zip'];
+				$r[$key]['receiver']['location'] 			= $d['receiver_location'];
+				$r[$key]['receiver']['ref'] 				= $d['receiver_ref'];
+				$r[$key]['receiver']['mail'] 				= $d['receiver_mail'];
+
 
 
 
@@ -344,6 +344,19 @@
 
 			$r = array();
 
+
+			// Set due date to default 14 days of not set
+			if (!isset($p['due_date']) || empty($p['due_date'])) {
+				$duedate = strtotime("+14 day", time());
+				$p['due_date'] = date('Y-m-d', $duedate);
+			}
+
+
+			// Remove dots in account number
+			if (!isset($p['bank_account_number']) || empty($p['bank_account_number'])) {
+				$p['bank_account_number'] = str_replace('.', '', $p['bank_account_number']);
+			}
+
 			$query = "INSERT INTO Invoice SET
 						app_id='{$this->App['app_id']}', 
 						app_user_id='{$p['user_id']}', 
@@ -356,6 +369,8 @@
 						sender_zip='{$p['sender_zip']}', 
 						sender_location='{$p['sender_location']}', 
 						sender_ref='{$p['sender_ref']}', 
+						sender_mail='{$p['sender_mail']}', 
+						sender_webpage='{$p['sender_webpage']}', 
 						invoice_ref='{$p['invoice_ref']}', 
 						receiver_orgnumber='{$p['receiver_orgnumber']}', 
 						receiver_name='{$p['receiver_name']}', 
@@ -363,7 +378,10 @@
 						receiver_zip='{$p['receiver_zip']}', 
 						receiver_location='{$p['receiver_location']}', 
 						receiver_ref='{$p['receiver_ref']}', 
-						receiver_mail='{$p['receiver_mail']}'";
+						receiver_mail='{$p['receiver_mail']}',
+						bank_account_number='{$p['bank_account_number']}',
+						description='{$p['description']}'
+						";
 			$result = $this->mysqli->query($query);
 
 			if ($result) {
@@ -631,12 +649,18 @@
 				if ($mail && !empty($getInvoice[$idInvoice]['receiver']['mail'])) {
 
 					$subject = "Invoice #$invoiceID";
-					$message = "Hi {$getInvoice[$idInvoice]['receiver']['name']}!<br /><br />";
-					$message .= "This is a new invoice.<br /><br />";
-					$message .= "<b>Invoice ID:</b> #$invoiceID<br />";
-					$message .= "<b>KID:</b> $KID<br />";
-					$message .= "<b>Due date:</b> {$getInvoice[$idInvoice]['data']['time']['due_date']}<br />";
-					$message .= "<b>SUM:</b> Not supported yet<br />";
+					$message = "<b>Hi {$getInvoice[$idInvoice]['receiver']['name']}!</b><br /><br />";
+					$message .= "This is a invoice.<br /><br />";
+
+					$message .= "<table>";
+						$message .= "<tr><td><b>Invoice ID:</b></td> <td>#$invoiceID</td></tr>";
+						$message .= "<tr><td><b>Due date:</b></td> <td>{$getInvoice[$idInvoice]['data']['time']['due_date']}</td></tr>";
+						$message .= "<tr><td><b>Bank account:</b>  &nbsp;&nbsp;&nbsp; </td> <td>{$getInvoice[$idInvoice]['data']['bank_account_number']}</td></tr>";
+						$message .= "<tr><td><b>KID:</b></td> <td>$KID</td></tr>";
+						$message .= "<tr><td><b>SUM TO PAY:</b></td> <td>{$getInvoice[$idInvoice]['data']['sum']['total_incl_vat']}</td></tr>";
+						$message .= "<tr><td><b>SUM ex. vat:</b></td> <td>{$getInvoice[$idInvoice]['data']['sum']['total']}</td></tr>";
+					$message .= "</table>";
+
 					$message .= "<br /><b>Best regards,</b><br />{$getInvoice[$idInvoice]['sender']['name']}";
 
 					$mailResult = $this->sendMail($getInvoice[$idInvoice]['receiver']['mail'], $subject, $message);
