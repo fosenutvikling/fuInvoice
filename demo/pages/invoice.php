@@ -40,11 +40,18 @@
 		<div class="container" style="border:1px solid #eaeaea; margin:3%;">
 			<div style="padding:20px;">
 
-				<h1>Invoice</h1>
+				
+
+				
 
 				<div class="row">
 					<div class="col-sm-8">
-						<div style="padding-top:20px; padding-left:20px;">
+
+						<div style="text-align:; margin-top:0px;">
+							<img src="http://fosen-utvikling.no/home/wp-content/uploads/2015/04/blue_long-300x73.png">
+						</div>
+
+						<div style="padding-top:40px; padding-left:0px;">
 							<div style="font-size:16px; font-weight:bold;"><?php echo $thisInvoice['receiver']['name']; ?></div>
 							<div style="font-size:16px;"><?php echo $thisInvoice['receiver']['address']; ?></div>
 							<div style="font-size:16px;"><?php echo $thisInvoice['receiver']['zip']; ?> <?php echo $thisInvoice['receiver']['location']; ?></div>
@@ -53,6 +60,14 @@
 					</div>
 
 					<div class="col-sm-4">
+
+
+						<div style="text-align:; margin-top:0px;">
+							<h1>Invoice</h1>
+						</div>
+
+						
+
 						<div style="padding-top:20px;">
 							<div style="font-size:16px; font-weight:bold;"><?php echo $thisInvoice['sender']['name']; ?></div>
 							<div style="font-size:16px;"><?php echo $thisInvoice['sender']['address']; ?></div>

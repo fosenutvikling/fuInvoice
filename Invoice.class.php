@@ -390,7 +390,13 @@
 		}
 
 
-
+		/**
+		 * Get invoice lines
+		 * Return all lines for the invoice
+		 *
+		 * @param 		Int		$idInvoice 			The Incremental ID to invoice
+		 * @return 		Array	$r 					Array with status/data
+		*/
 		public function getInvoiceLines($idInvoice)
 		{
 			$r = array();
