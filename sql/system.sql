@@ -39,9 +39,12 @@ CREATE TABLE IF NOT EXISTS Invoice
   time_due_date DATE NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
 
+  pid INT UNSIGNED DEFAULT NULL, /*parent invoice, if reminder sent (var only set for type=reminder*/
+  rnumber TINYINT(1) NOT NULL DEFAULT 0, /* reminder number. only set for type=reminder*/
+
   invoice_type ENUM('draft','invoice','credit','reminder','dept') NOT NULL DEFAULT 'draft',
 
-  sender_orgnumber CHAR(9) NOT NULL DEFAULT '000000000',
+  sender_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   sender_name VARCHAR(100) NOT NULL DEFAULT '',
   sender_address VARCHAR(255) NOT NULL DEFAULT '',
   sender_zip CHAR(4) NOT NULL DEFAULT '0000',
@@ -53,7 +56,7 @@ CREATE TABLE IF NOT EXISTS Invoice
 
   invoice_ref VARCHAR(255) NOT NULL DEFAULT '',/* reference to other person within company*/
 
-  receiver_orgnumber CHAR(9) NOT NULL DEFAULT '000000000',
+  receiver_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   receiver_name VARCHAR(100) NOT NULL DEFAULT '',
   receiver_address VARCHAR(255) NOT NULL DEFAULT '',
   receiver_zip CHAR(4) NOT NULL DEFAULT '0000',
@@ -62,6 +65,10 @@ CREATE TABLE IF NOT EXISTS Invoice
   receiver_mail VARCHAR(255) NOT NULL DEFAULT '', /*sender mail*/
 
   FOREIGN KEY(app_id) REFERENCES Application(app_id)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE,
+
+  FOREIGN KEY(pid) REFERENCES Invoice(id)
   ON UPDATE CASCADE
   ON DELETE CASCADE,
 

@@ -1,19 +1,36 @@
 <?php
 
 /**
- * fuInvoice.
- * User: Jonas
- * Date: 22.09.2015
- * Time: 22.44
- * InvoicePDF.php
+Project:		fuInvoice
+Description:	Invoice backend for web-applications
+
+License:		Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+File:			InvoicePDF.php
+File purpose:	Create invoice from invoice data
+
+Creator:		Fosen Utvikling AS
+Contact:		post at fosen-utvikling dot as
+
+Developers:		Jonas Kirkemyr
+                Robert Andresen
  */
 
+
 namespace fuInvoice\PDF;
+
+use NumberFormatter;
 
 class InvoicePDF extends PDF
 {
     const FONT      = 'helvetica';
     const FONT_SIZE = 10;
+
+    public static $LOCALE='no_utf8';
+    public static $LOCALE_CURRENCY='NOK';
+
+    public static $DATE_FORMAT='d-m-Y';
 
     /** @var  string path to logo to use for invoice */
     private $logo;
@@ -21,9 +38,13 @@ class InvoicePDF extends PDF
     /** @var  array */
     private $invoiceData;
 
+    /** @var  NumberFormatter */
+    private $moneyFormatter;
+
     public function __construct()
     {
         $this->invoiceData = array();
+        $this->moneyFormatter=new NumberFormatter(self::$LOCALE,NumberFormatter::CURRENCY);
         parent::__construct();
 
     }
@@ -43,7 +64,7 @@ class InvoicePDF extends PDF
         }
         else
         {
-            echo 'no logo';//throws error
+          //  echo 'no logo';//throws error
             //todo: handle no image found
         }
 
@@ -89,8 +110,7 @@ class InvoicePDF extends PDF
      * todo: support multilanguage
      */
     private function appendRightColumn()
-    {//todo: append isMVA to db? append to account number
-
+    {
         $right_column = '<style>';
             $right_column .= 'div.headlineContainer {text-align: right;color: #222222;font-size: 24pt;font-weight:normal;width:50%;border-bottom:1px solid #eaeaea;}';
             $right_column .= 'div.customerSenderBox{color:#222;border-bottom:1px solid #eaeaea;}';
@@ -108,7 +128,7 @@ class InvoicePDF extends PDF
             $right_column .= '</div>';
 
             $right_column.='<div>';
-                $right_column.='Foretaksregisteret '.$this->invoiceData['sender']['orgnumber'].' '.$this->invoiceData['sender']['isMVA'];
+                $right_column.='Foretaksregisteret '.$this->invoiceData['sender']['orgnumber'];
             $right_column.='</div>';
 
             $right_column.='<div>';
@@ -138,17 +158,17 @@ class InvoicePDF extends PDF
             $right_column.='<table width="100%">';
                 $right_column.='<tr>';
                     $right_column.='<td>Fakturadato:</td>';
-                    $right_column.='<td>'.$this->invoiceData['time_sent'].'</td>';
+                    $right_column.='<td>'.$this->invoiceData['data']['time']['sent'].'</td>';
                     $right_column.='<td>Fakturanr.:</td>';
-                    $right_column.='<td>'.$this->invoiceData['invoice_id'].'</td>';
+                    $right_column.='<td>'.$this->invoiceData['data']['invoice_number'].'</td>';
                 $right_column.='</tr>';
 
                 $right_column.='<tr>';
                     $right_column.='<td>Forfallsdato:</td>';
-                    $right_column.='<td>'.$this->invoiceData['time_due_date'].'</td>';
+                    $right_column.='<td>'.$this->invoiceData['data']['time']['due_date'].'</td>';
 
                     $right_column.='<td>Til konto:</td>';
-                    $right_column.='<td>'.$this->invoiceData['bank_account_number'].'</td>';
+                    $right_column.='<td>'.$this->invoiceData['data']['bank_account_number'].'</td>';
                 $right_column.='</tr>';
             $right_column.='</table>';
         $right_column.='</div>';
@@ -175,7 +195,7 @@ class InvoicePDF extends PDF
             </style>
 
             <div class='invoiceMessage' style='margin:30px 0px;'>
-            {$this->invoiceData['description']}</div>
+            {$this->invoiceData['data']['description']}</div>
 
             $addCredit
 EOD;
@@ -200,35 +220,71 @@ EOD;
             $tbl.='table.items td{border-bottom:1px solid #eaeaea;}';
         $tbl.='</style>';
         
-        $tbl.='<table class="items" width="100%" border="0" cellpadding="2">';
+        $tbl.='<table class="items" width="100%" border="0" cellpadding="5">';
             //header
             $tbl.='<thead>';
                 $tbl.='<tr>';
-                    $tbl.='<th width="230" align="left">Beskrivelse</th>';
-                    $tbl.='<th width="120" align="left">Pris</th>';
-                    $tbl.='<th width="80" align="left">Antall</th>';
-                    $tbl.='<th width="80" align="left">MVA</th>';
-                    $tbl.='<th width="120" align="left">Beløp</th>';
+                    $tbl.='<th width="70" align="left">Produkt</th>';
+                    $tbl.='<th width="200" align="left">Beskrivelse</th>';
+                    $tbl.='<th width="100" align="right">Pris</th>';
+                    $tbl.='<th width="80" align="right">Antall</th>';
+                    $tbl.='<th width="80" align="right">MVA</th>';
+                    $tbl.='<th width="120" align="right">Beløp</th>';
                 $tbl.='</tr>';
             $tbl.='</thead>';
 
                 foreach($this->invoiceData['lines'] as $line)
                 {
-                    $price=$line['price'];
-                    $sum=$line['sum'];
+                    $price=$this->moneyFormatter->formatCurrency($line['price'],self::$LOCALE_CURRENCY);
+                    $sum=$this->moneyFormatter->formatCurrency($line['sum_price_incl_vat'],self::$LOCALE_CURRENCY);
+
 
                     $tbl.='<tr>';
-                        $tbl.='<td width="230">'.$line['name'].'</td>';
-                        $tbl.='<td width="120">'.$price.'</td>';
-                        $tbl.='<td width="80">'.$line['quantity'].'</td>';
-                        $tbl.='<td width="80">'.$line['mva'].'</td>';
-                        $tbl.='<td width="120">'.$sum.'</td>';
+                        $tbl.='<td width="70" align="right">'.$line['app']['product_id'].'</td>';
+                        $tbl.='<td width="200" align="left">'.$line['description'].'</td>';
+                        $tbl.='<td width="100" align="right">'.$price.'</td>';
+                        $tbl.='<td width="80" align="right">'.$line['quantity'].'</td>';
+                        $tbl.='<td width="80" align="right">'.$line['vat'].'</td>';
+                        $tbl.='<td width="120" align="right">'.$sum.'</td>';
                     $tbl.='</tr>';
                 }
 
 
         $tbl.='</table>';
-        $this->tcpdf->writeHTML($tbl, true, false, true, false, '');
+
+        $tbl.='<br><br>';
+
+        $netAmount=(double)$this->invoiceData['data']['sum']['total'];
+        $payAmount=$this->moneyFormatter->parseCurrency($this->invoiceData['data']['sum']['total_incl_vat'],self::$LOCALE_CURRENCY);
+        $vatAmount=$payAmount-$netAmount;
+
+        $netAmount=$this->moneyFormatter->formatCurrency($netAmount,self::$LOCALE_CURRENCY);
+        $payAmount=$this->moneyFormatter->formatCurrency($payAmount,self::$LOCALE_CURRENCY);
+        $vatAmount=$this->moneyFormatter->formatCurrency($vatAmount,self::$LOCALE_CURRENCY);
+
+        $tbl.='<table border="0" cellpadding="2">';
+            $tbl.='<tbody>';
+                $tbl.='<tr>';
+                    $tbl.='<td width="430" colspan="4"></td>';
+                    $tbl.='<td width="100">Nettobeløp</td>';
+                    $tbl.='<td width="100" align="right">'.$netAmount.'</td>';
+                $tbl.='</tr>';
+
+                $tbl.='<tr>';
+                    $tbl.='<td width="430" colspan="4"></td>';
+                    $tbl.='<td width="100">MVA</td>';
+                    $tbl.='<td width="100" align="right">'.$vatAmount.'</td>';
+                $tbl.='</tr>';
+
+                $tbl.='<tr>';
+                    $tbl.='<td width="430" colspan="4"></td>';
+                    $tbl.='<td width="100">Å betale</td>';
+                    $tbl.='<td width="100" align="right">'.$payAmount.'</td>';
+                $tbl.='</tr>';
+            $tbl.='</tbody>';
+        $tbl.='</table>';
+
+    $this->tcpdf->writeHTML($tbl, true, false, true, false, '');
 
         return true;
     }
@@ -238,19 +294,19 @@ EOD;
      */
     private function appendFooter()
     {
-        $paySum    = null;
-        $invoiceAN = null;
-        $kidnr     = null;
+        $paySum    = $this->invoiceData['data']['sum']['total_incl_vat'];
+        $invoiceAN = $this->invoiceData['data']['bank_account_number'];
+        $kidnr     = $this->invoiceData['data']['kid'];
         $tbl       = <<<EOD
           <table border="0" cellpadding="2">
             <tbody>
               <tr>
                 <td width="100">Forfall:</td>
-                <td width="100">{$this->invoiceData['time_due_date']}</td>
+                <td width="100">{$this->invoiceData['data']['time']['due_date']}</td>
               </tr>
 
               <tr>
-                <td>SUM: </td>
+                <td>Sum: </td>
                 <td>$paySum</td>
               </tr>
 
@@ -278,7 +334,7 @@ EOD;
      */
     private function getInvoiceHeader()
     {
-        switch($this->invoiceData['idinvoice_type'])
+        switch($this->invoiceData['data']['type'])
         {
             case 'invoice':
                 return 'Faktura';
@@ -328,6 +384,18 @@ EOD;
     public function setInvoiceData(array $invoiceData)
     {
         $this->invoiceData = $invoiceData;
+
+        $timeSent=new \DateTime($this->invoiceData['data']['time']['sent']);
+        $this->invoiceData['data']['time']['sent']=$timeSent->format(self::$DATE_FORMAT);
+
+        $timeDue=new \DateTime($this->invoiceData['data']['time']['due_date']);
+        $this->invoiceData['data']['time']['due_date']=$timeDue->format(self::$DATE_FORMAT);
+
+
+        $this->invoiceData['data']['sum']['total_incl_vat']=
+            $this->moneyFormatter->formatCurrency(
+                $this->invoiceData['data']['sum']['total_incl_vat'],
+                self::$LOCALE_CURRENCY);
     }
 
 

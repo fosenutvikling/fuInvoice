@@ -18,14 +18,15 @@
 
 
 	namespace fuInvoice;
+    use fuInvoice\PDF\InvoicePDF;
 
 
-	/**
+    /**
 	* Invoice class
 	*/
 	class Invoice
 	{
-		
+
 		function __construct($apiID, $host, $user, $pw, $dbname)
 		{
 			$this->mysqli 	= $this->dbConnect($host, $user, $pw, $dbname);
@@ -48,7 +49,7 @@
 			if ($mysqli->connect_errno) {
 				die('Connect Error: ' . $mysqli->connect_errno);
 			}
-			
+
 			// Set DB charset
 			mysqli_set_charset($mysqli, "utf8");
 
@@ -96,7 +97,7 @@
 
 		/**
 		 * Add new application customer
-		 * 
+		 *
 		 * @return 	  String 	$r['api_key'] 		R/W Api key
 		 * @return 	  String 	$r['api_key_ro'] 	R Api key
 		*/
@@ -123,7 +124,7 @@
 		 * The complete list of IP's need to be sent each time,
 		 * as all old IP's will be deleted when using this function.
 		 *
-		 * @param 	$appID 			Application ID 
+		 * @param 	$appID 			Application ID
 		 * @param 	$ipAddresses 	Commalist of all IP's to whitelist
 		 * @return 	$r 				Status array
 		*/
@@ -137,8 +138,8 @@
 		 * Get IP whitelist
 		 * The complete list of whitelisted IP's
 		 *
-		 * @param 		Int		$appID 		Application ID 
-		 * @return 		Array	$r 			Array with IPs 
+		 * @param 		Int		$appID 		Application ID
+		 * @return 		Array	$r 			Array with IPs
 		*/
 		public function getWhitelist($appID)
 		{
@@ -234,7 +235,7 @@
 
 
 
-			$query = "SELECT * 
+			$query = "SELECT *
 					  FROM Invoice 
 					  WHERE app_id='{$this->App['app_id']}' $queryString";
 
@@ -276,6 +277,7 @@
 				$r[$key]['receiver']['location'] 			= $d['receiver_location'];
 				$r[$key]['receiver']['ref'] 				= $d['receiver_ref'];
 				$r[$key]['receiver']['mail'] 				= $d['receiver_mail'];
+
 
 
 
@@ -341,14 +343,14 @@
 			/*
 				$this->AppID
 				If id is provided => Check if draft and update
-				
+
 
 
 				Check if config for summing invoices is set, if yes {
 					Get draft invoice for $p['app_receiver_id']
 					Add lines to that draft
 				}
-				
+
 				else {
 					Check if $p['id'] exists: If yes => add line to that invoice
 				}
@@ -362,6 +364,7 @@
 
 			$r = array();
 
+
 			// Set due date to default 14 days of not set
 			if (!isset($p['due_date']) || empty($p['due_date'])) {
 				$duedate = strtotime("+14 day", time());
@@ -374,7 +377,7 @@
 				$p['bank_account_number'] = str_replace('.', '', $p['bank_account_number']);
 			}
 
-			$query = "INSERT INTO Invoice SET 
+			$query = "INSERT INTO Invoice SET
 						app_id='{$this->App['app_id']}', 
 						app_user_id='{$p['user_id']}', 
 						app_receiver_id='{$p['customer_id']}', 
@@ -426,7 +429,7 @@
 				$r['status'] = 'Could not write to database. Please check database and/or parameters.';
 			}
 
-			
+
 			return $r;
 		}
 
@@ -442,7 +445,7 @@
 		{
 			$r = array();
 
-			$query = "SELECT * 
+			$query = "SELECT *
 					  FROM Invoice_line 
 					  WHERE invoice_id='$idInvoice'";
 
@@ -503,7 +506,7 @@
 			$p['discount'] 	= str_replace(',', '.', $p['discount']);
 			$p['vat'] 		= str_replace(',', '.', $p['vat']);
 
-			$query = "INSERT INTO Invoice_line SET 
+			$query = "INSERT INTO Invoice_line SET
 						invoice_id='{$p['id_invoice']}', 
 						app_product_id='{$p['product_id']}', 
 						description='{$p['description']}', 
@@ -522,7 +525,7 @@
 				$r['status'] = 'Could not write to database. Please check database and/or parameters.';
 			}
 
-			
+
 			return $r;
 		}
 
@@ -563,7 +566,7 @@
 
 
 			// Delete invoice
-			$query = "DELETE FROM Invoice 
+			$query = "DELETE FROM Invoice
 					  WHERE app_id='{$this->App['app_id']}' 
 					  	AND invoice_type LIKE 'draft'
 					  	AND id='$id'";
@@ -576,7 +579,7 @@
 				$r['message'] = 'DB Error. Please check database and/or parameters.';
 			}
 
-			
+
 			return $r;
 		}
 
@@ -584,7 +587,7 @@
 		/**
 		 * Move invoice line
 		 * Move to another invoice
-		 * 
+		 *
 		 * @param 		Int		$lineID 			ID for line to be moved
 		 * @param 		String	$invoiceID 			Target invoice to move to
 		 * @return 		Array	$r 					Array with status/data
@@ -638,7 +641,7 @@
 
 
 				// Update invoice status
-				$query = "UPDATE Invoice SET 
+				$query = "UPDATE Invoice SET
 							invoice_id='$invoiceID', 
 							kid='$KID', 
 							time_sent = '".date('Y-m-d H:i:s')."',
@@ -699,22 +702,12 @@
 		*/
 		private function getInvoiceNextID()
 		{
-			$query = "SELECT invoice_id 
+			$query = "SELECT MAX(invoice_id) AS invoice_id
 					  FROM Invoice 
-					  WHERE app_id='{$this->App['app_id']}'
-					  ORDER BY invoice_id DESC";
-
-			$result = $this->mysqli->query($query);
-			$numRows = $result->num_rows;
-
-			if ($numRows == 0) {
-				return 1;
-			}
-
-			else {
-				$d = $result->fetch_array();
-				return ($d['invoice_id'] + 1);
-			}
+					  WHERE app_id='{$this->App['app_id']}'";
+            $result=$this->mysqli->query($query);
+			$d = $result->fetch_array();
+			return ($d['invoice_id']+1);
 		}
 
 
@@ -771,7 +764,7 @@
 				$sum = 0;
 
 				for($i=0; $i<count($siffer); ++$i) $sum += $this->checksum(( $i & 1 ) ? $siffer[$i] * 1 : $siffer[$i] * 2);
-				
+
 				$checksumInt = ($sum==0) ? 0 : substr(10 - substr($sum, -1),-1);
 
 				return $invoicenumber . $checksumInt;
@@ -825,6 +818,37 @@
 
 			return $result;
 		}
+
+        /**
+         * @param int  $id id of invoice to generate pdf from
+         * @param bool $toString returns pdf as string (to be used with mail)
+         *
+         * @return bool
+         */
+        public function getPDF($id,$toString=false)
+        {
+            $invoice=$this->getInvoices(['invoice_id'=>$id]);
+            if($invoice && array_key_exists($id,$invoice))
+            {
+                InvoicePDF::$author='Fosen-Utvikling AS';
+                InvoicePDF::$filename='faktura #'.$invoice[$id]['data']['invoice_number'];
+                InvoicePDF::$keywords='faktura invoice Fosen-Utvikling AS';
+                InvoicePDF::$subject='Faktura laget av fuInvoice, levert av Fosen-Utvikling AS';
+
+                $invoicePDF=new InvoicePDF();
+                $invoicePDF->setInvoiceData($invoice[$id]);
+                $invoicePDF->generate();
+
+                if($toString)
+                    return $invoicePDF->toString();
+
+                $invoicePDF->toPDF();
+
+                return true;
+            }
+
+            return false;
+        }
 
 
 	}
