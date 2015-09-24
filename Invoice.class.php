@@ -696,7 +696,7 @@
 
 					$message .= "<br /><b>Best regards,</b><br />{$getInvoice['sender']['name']}";
 
-					$mailResult = $this->sendMail($getInvoice['receiver']['mail'], $subject, $message);
+					$mailResult = $this->sendMail($idInvoice,$getInvoice['receiver']['mail'], $subject, $message);
 					$r['status_mail'] = $mailResult;
 				}
 			} else {
@@ -805,31 +805,54 @@
 		}
 
 
-		/**
-		 * Send Mail
-		 *
-		 * @param 		String		$to 		Receiver mailaddress
-		 * @param 		String		$subject 	Mail-subject
-		 * @param 		String		$message 	Mail-message
-		 * @return 		Boolean				 	True/false for if mail is sent
-		*/
-		private function sendMail($to, $subject, $message) {
+        /**
+         * Send Mail
+         *
+         * @param        int       $id
+         * @param        String $to      Receiver mailaddress
+         * @param        String $subject Mail-subject
+         * @param        String $message Mail-message
+         *
+         * @return bool True/false for if mail is sent
+         */
+		private function sendMail($id,$to, $subject, $message) {
 
-			// UTF-8 decoode to support characters like norwegian ÆØÅ
-			$subject = utf8_decode($subject);
-			$message = utf8_decode($message);
+            // UTF-8 decoode to support characters like norwegian ÆØÅ
+            $subject = utf8_decode($subject);
+            $message = utf8_decode($message);
 
-			$message = "<span style='font-family:Sans-serif; font-size:12px;'>" . $message . "</span>";
+			$mail=$this->initMail();
+            try
+            {
+                $mail->setFrom($this->mail_sender_address, $this->mail_reply_name);
+                $mail->addAddress($to);
 
-			$headers = "Content-type: text/html; charset=iso-8859-1" . "\r\n";
-			$headers .= "From: {$this->mail_reply_name} <{$this->mail_sender_address}>" . "\r\n";
-			$headers .= "Return-Path: {$this->mail_reply_name} <{$this->mail_reply_address}>" . "\r\n";
-			$headers .= "Reply-To: {$this->mail_reply_address}" . "\r\n";
-			$headers .= "X-Mailer: PHP/" . phpversion();
+                $mail->addStringAttachment($this->getPDF($id),'faktura.pdf');
 
-			$result = mail($to, $subject, $message, $headers);
+                $mail->Subject=$subject;
+                $mail->Body=$message;
 
-			return $result;
+                if($mail->send())
+                    return true;
+            }
+            catch(\phpmailerException $e){}
+
+            return false;
+		}
+
+		private function initMail()
+		{
+			$mail=new \PHPMailer();
+
+			$mail->isSMTP();
+			$mail->Host=Settings::MAIL_HOST;
+			$mail->SMTPAuth=Settings::MAIL_SMTP_AUTH;
+			$mail->Username=Settings::MAIL_USERNAME;
+			$mail->Password=Settings::MAIL_PASSWORD;
+			$mail->SMTPSecure=Settings::MAIL_SMTP_SECURE;
+			$mail->Port=Settings::MAIL_PORT;
+
+			return $mail;
 		}
 
         /**
