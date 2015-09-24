@@ -2,6 +2,7 @@
 	// Get required files
 	require_once('../config.php');
 	require_once('../Invoice.class.php');
+	require_once('functions.php');
 
 	$apikey = 'bRAuvH268cp6g2pzSH3000oAqZLiZdMcas613fd5o6eiIS6175fmIahj67d7';
 	$base_url = '../api.php?apikey='.$apikey;

@@ -196,14 +196,27 @@
 				$q[] = "kid='{$p['kid']}'";
 			}
 
+
+			// Filter by time created
 			if (isset($p['time_from']) && !empty($p['time_from'])) {
-				$q[] = "time_from > '{$p['time_from']}'";
-				// (date_field BETWEEN '2010-01-30 14:15:55' AND '2010-09-29 10:15:55')
+				$q[] = "time_created >= '{$p['time_from']}'";
+				// (date_field BETWEEN '2010-01-30 14:15:55' AND '2010-09-29 10:15:55') ??
 			}
 
 			if (isset($p['time_to']) && !empty($p['time_to'])) {
-				$q[] = "time_to < '{$p['time_to']}'";
+				$q[] = "time_created <= '{$p['time_to']}'";
 			}
+
+
+			// Filter by duedate
+			if (isset($p['due_date_from']) && !empty($p['due_date_from'])) {
+				$q[] = "time_due_date >= '{$p['due_date_from']}'";
+			}
+
+			if (isset($p['due_date_to']) && !empty($p['due_date_to'])) {
+				$q[] = "time_due_date <= '{$p['due_date_to']}'";
+			}
+
 
 
 			if (isset($p['type']) && !empty($p['type'])) {
@@ -237,7 +250,8 @@
 
 			$query = "SELECT *
 					  FROM Invoice 
-					  WHERE app_id='{$this->App['app_id']}' $queryString";
+					  WHERE app_id='{$this->App['app_id']}' $queryString
+					  ORDER BY time_due_date DESC";
 
 			$result = $this->mysqli->query($query);
 			$numRows = $result->num_rows;
@@ -626,18 +640,17 @@
 
 
 			// Check invoice type/status
-			$p = array('invoice_id'=>$idInvoice);
-			$getInvoice = $this->getInvoices($p);
+			$getInvoice = $this->getInvoice($idInvoice);
 
 
 
 			// Generate ID and KID - if draft
-			if ($getInvoice[$idInvoice]['data']['type'] == 'draft') {
+			if ($getInvoice['data']['type'] == 'draft') {
 				// Get next invoice number
 				$invoiceID = $this->getInvoiceNextID();
 
 				// Generate KID
-				$KID = $this->generateKID($invoiceID, $type='MOD10');
+				$KID = $this->generateKID($invoiceID, 'MOD10');
 
 
 				// Update invoice status
@@ -654,8 +667,8 @@
 			// Re-send
 			else {
 				$result = true;
-				$invoiceID = $getInvoice[$idInvoice]['data']['invoice_number'];
-				$KID = $getInvoice[$idInvoice]['data']['kid'];
+				$invoiceID = $getInvoice['data']['invoice_number'];
+				$KID = $getInvoice['data']['kid'];
 			}
 
 
@@ -674,16 +687,16 @@
 
 					$message .= "<table>";
 						$message .= "<tr><td><b>Invoice ID:</b></td> <td>#$invoiceID</td></tr>";
-						$message .= "<tr><td><b>Due date:</b></td> <td>{$getInvoice[$idInvoice]['data']['time']['due_date']}</td></tr>";
-						$message .= "<tr><td><b>Bank account:</b>  &nbsp;&nbsp;&nbsp; </td> <td>{$getInvoice[$idInvoice]['data']['bank_account_number']}</td></tr>";
+						$message .= "<tr><td><b>Due date:</b></td> <td>{$getInvoice['data']['time']['due_date']}</td></tr>";
+						$message .= "<tr><td><b>Bank account:</b>  &nbsp;&nbsp;&nbsp; </td> <td>{$getInvoice['data']['bank_account_number']}</td></tr>";
 						$message .= "<tr><td><b>KID:</b></td> <td>$KID</td></tr>";
-						$message .= "<tr><td><b>SUM TO PAY:</b></td> <td>{$getInvoice[$idInvoice]['data']['sum']['total_incl_vat']}</td></tr>";
-						$message .= "<tr><td><b>SUM ex. vat:</b></td> <td>{$getInvoice[$idInvoice]['data']['sum']['total']}</td></tr>";
+						$message .= "<tr><td><b>SUM TO PAY:</b></td> <td>{$getInvoice['data']['sum']['total_incl_vat']}</td></tr>";
+						$message .= "<tr><td><b>SUM ex. vat:</b></td> <td>{$getInvoice['data']['sum']['total']}</td></tr>";
 					$message .= "</table>";
 
-					$message .= "<br /><b>Best regards,</b><br />{$getInvoice[$idInvoice]['sender']['name']}";
+					$message .= "<br /><b>Best regards,</b><br />{$getInvoice['sender']['name']}";
 
-					$mailResult = $this->sendMail($getInvoice[$idInvoice]['receiver']['mail'], $subject, $message);
+					$mailResult = $this->sendMail($getInvoice['receiver']['mail'], $subject, $message);
 					$r['status_mail'] = $mailResult;
 				}
 			} else {
@@ -827,7 +840,8 @@
          */
         public function getPDF($id,$toString=false)
         {
-            $invoice=$this->getInvoices(['invoice_id'=>$id]);
+        	$p = array('invoice_id'=>$id);
+            $invoice=$this->getInvoices($p);
             if($invoice && array_key_exists($id,$invoice))
             {
                 InvoicePDF::$author='Fosen-Utvikling AS';
