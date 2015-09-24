@@ -337,6 +337,7 @@ EOD;
         switch($this->invoiceData['data']['type'])
         {
             case 'invoice':
+            case 'paid':
                 return 'Faktura';
 
             case 'credit':

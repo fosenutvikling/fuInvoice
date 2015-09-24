@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   pid INT UNSIGNED DEFAULT NULL, /*parent invoice, if reminder sent (var only set for type=reminder*/
   rnumber TINYINT(1) NOT NULL DEFAULT 0, /* reminder number. only set for type=reminder*/
 
-  invoice_type ENUM('draft','invoice','credit','reminder','dept') NOT NULL DEFAULT 'draft',
+  invoice_type ENUM('draft','invoice','credit','reminder','dept','paid') NOT NULL DEFAULT 'draft',
 
   sender_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   sender_name VARCHAR(100) NOT NULL DEFAULT '',
