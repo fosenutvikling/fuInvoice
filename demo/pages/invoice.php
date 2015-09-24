@@ -9,10 +9,7 @@
 	$obj = new fuInvoice\Invoice($apikey, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);*/
 
 	$iID = $_GET['id'];
-
-	$p = array('invoice_id'=>$iID);
-	$thisInvoice = $obj->getInvoices($p);
-	$thisInvoice = $thisInvoice[$iID];
+	$thisInvoice = $obj->getInvoice($iID);
 
 ?>
 
@@ -38,7 +35,7 @@
 
 
 			<div style="text-align:; margin-top:0px;">
-				<h1>Invoice</h1>
+				<h1><?php echo _('Invoice'); ?></h1>
 			</div>
 
 			
