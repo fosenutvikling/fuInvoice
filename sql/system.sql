@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS Application
 CREATE TABLE IF NOT EXISTS ApplicationWhiteList
 (
   app_id INT UNSIGNED NOT NULL,
-  ip INT UNSIGNED NOT NULL DEFAULT 2130706433,/*there's no place like home*/
+  ip VARBINARY(16) NOT NULL DEFAULT '7F000001',/*there's no place like home*/
 
   FOREIGN KEY(app_id) REFERENCES Application(app_id)
   ON UPDATE CASCADE
@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS Invoice
 (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   app_id INT UNSIGNED NOT NULL,
-  app_user_id MEDIUMINT UNSIGNED NOT NULL, /*16777215*/
-  app_receiver_id MEDIUMINT UNSIGNED NOT NULL, /* external customer id*/
+  app_user_id VARCHAR(20) UNSIGNED NOT NULL, /*16777215*/
+  app_receiver_id VARCHAR(20) UNSIGNED NOT NULL, /* external customer id*/
   invoice_id INT UNSIGNED NOT NULL, /* the invoice number used*/
 
   kid INT UNSIGNED NOT NULL,
-  bank_account_number CHAR(11) NOT NULL DEFAULT '00000000000',
+  bank_account_number VARCHAR(20) NOT NULL DEFAULT '',
 
   time_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   time_sent TIMESTAMP NOT NULL DEFAULT 0,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   sender_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   sender_name VARCHAR(100) NOT NULL DEFAULT '',
   sender_address VARCHAR(255) NOT NULL DEFAULT '',
-  sender_zip CHAR(4) NOT NULL DEFAULT '0000',
+  sender_zip VARCHAR(10) NOT NULL DEFAULT '',
   sender_location VARCHAR(255) NOT NULL DEFAULT '',
   sender_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
   sender_mail VARCHAR(255) NOT NULL DEFAULT '',
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS Invoice
   receiver_orgnumber VARCHAR(20) NOT NULL DEFAULT '',
   receiver_name VARCHAR(100) NOT NULL DEFAULT '',
   receiver_address VARCHAR(255) NOT NULL DEFAULT '',
-  receiver_zip CHAR(4) NOT NULL DEFAULT '0000',
+  receiver_zip VARCHAR(10) NOT NULL DEFAULT '',
   receiver_location VARCHAR(255) NOT NULL DEFAULT '',
   receiver_ref VARCHAR(255) NOT NULL DEFAULT '', /*sender name*/
   receiver_mail VARCHAR(255) NOT NULL DEFAULT '', /*sender mail*/
